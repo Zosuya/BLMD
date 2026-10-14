@@ -163,11 +163,26 @@ class BLMD_OT_preview_new(_InPreview, bpy.types.Operator):
         return {'FINISHED'}
 
 
-class BLMD_OT_preview_open(_InPreview, bpy.types.Operator):
-    """Open a text file and show it in this preview"""
+def _open_target(area):
+    """開檔要放進哪個文字編輯器資料：文字編輯器就是它自己，預覽就是它保留的那一份。"""
+    if area is None:
+        return None
+    if area.type == 'TEXT_EDITOR':
+        return area.spaces.active
+    if is_preview(area):
+        return text_space(area)
+    return None
+
+
+class BLMD_OT_preview_open(bpy.types.Operator):
+    """Open a Markdown or text file (Blender's own Open does not list .md files)"""
 
     bl_idname = "blmd.preview_open"
-    bl_label = "Open Text"
+    bl_label = "Open Markdown"
+
+    @classmethod
+    def poll(cls, context):
+        return _open_target(context.area) is not None
 
     filepath: bpy.props.StringProperty(subtype='FILE_PATH')
     filter_glob: bpy.props.StringProperty(default="*.md;*.markdown;*.txt", options={'HIDDEN'})
@@ -187,12 +202,18 @@ class BLMD_OT_preview_open(_InPreview, bpy.types.Operator):
             except (RuntimeError, OSError) as e:
                 self.report({'ERROR'}, f"Cannot open file: {e}")
                 return {'CANCELLED'}
-        text_space(context.area).text = text
+        _open_target(context.area).text = text
         context.area.tag_redraw()
         return {'FINISHED'}
 
 
 # ---------------------------------------------------------------- 標題列
+
+def draw_text_menu(self, context):
+    """文字編輯器的 Text 選單：內建的 Open 看不到 .md，這裡補一個看得到的。"""
+    self.layout.separator()
+    self.layout.operator(BLMD_OT_preview_open.bl_idname, icon='FILE_FOLDER')
+
 
 def draw_text_header(self, context):
     if context.space_data.text is None:
@@ -257,6 +278,7 @@ def _tick():
 
 def register():
     bpy.types.TEXT_HT_header.append(draw_text_header)
+    bpy.types.TEXT_MT_text.append(draw_text_menu)
     bpy.types.INFO_HT_header.append(draw_info_header)
     if not bpy.app.timers.is_registered(_tick):
         bpy.app.timers.register(_tick, first_interval=0.2, persistent=True)
@@ -266,6 +288,7 @@ def unregister():
     if bpy.app.timers.is_registered(_tick):
         bpy.app.timers.unregister(_tick)
     bpy.types.INFO_HT_header.remove(draw_info_header)
+    bpy.types.TEXT_MT_text.remove(draw_text_menu)
     bpy.types.TEXT_HT_header.remove(draw_text_header)
     scroll.clear()
     last_draw.clear()

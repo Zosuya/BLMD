@@ -38,6 +38,8 @@ For a complete walkthrough that you can open and try inside Blender, see the [Us
 | Preview | Wheel, Page Up/Down, Home/End | Scroll |
 | Preview | Left click | Toggle checkboxes, follow links |
 
+To open a .md file, use **Text > Open Markdown** (Blender's own Open does not list .md files).
+
 The same actions are available as buttons in the Text Editor header. The preview header has a text selector with New and Open, like the Text Editor.
 
 ## Safety

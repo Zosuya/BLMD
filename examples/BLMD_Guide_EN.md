@@ -15,6 +15,7 @@
 | **Edit** button in the preview header | Ctrl+Shift+V | Switches back to the Text Editor |
 
 - The preview header has a **text selector** just like the Text Editor: browse other notes, create a new one, or open a .md file from disk. The X on the right only clears the preview; it does not delete the text.
+- Blender's own Open does not list .md files (it doesn't treat them as text). Use **Text > Open Markdown** at the bottom of the Text Editor's Text menu, or the folder button in the preview header.
 - Each preview remembers which note it shows, across workspace switches and after saving and reopening the file.
 - If the screen already has a preview of the same note, Ctrl+Alt+V does not open a second one.
 
