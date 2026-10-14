@@ -4,6 +4,8 @@
 
 BLMD adds a live Markdown preview to Blender's Text Editor. Write notes in the built-in Text Editor and see them rendered next to it, updating as you type. Checkboxes in the preview can be toggled with a click, and links can open web pages or drive Blender itself: switch workspaces, frame objects, jump to frames, or jump to a node in the Node Editor.
 
+For a complete walkthrough that you can open and try inside Blender, see the [User Guide](examples/BLMD_Guide_EN.md) ([繁體中文](examples/BLMD_Guide.md)).
+
 ## Features
 
 - **Live preview** next to the Text Editor, or toggled in place.
