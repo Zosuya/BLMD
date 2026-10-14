@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+dist/
+build/
+*.zip
+*.blend1
+.env
+.vscode/
+.idea/
+.claude/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,21 @@
+schema_version = "1.0.0"
+
+id = "blmd"
+version = "0.1.0"
+name = "BLMD"
+tagline = "Live Markdown preview for the Text Editor"
+maintainer = "Wanstagram"
+type = "add-on"
+
+tags = ["Text Editor", "User Interface"]
+
+blender_version_min = "5.2.0"
+
+license = ["SPDX:GPL-3.0-or-later"]
+copyright = ["2026 Wanstagram"]
+
+[permissions]
+files = "Load images referenced by notes from disk"
+
+[build]
+paths_exclude_pattern = ["__pycache__/", "/.git/", "*.zip"]
