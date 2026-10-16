@@ -215,8 +215,9 @@ def draw_preview():
                 continue
             _draw_image(op, top, base)
 
-    if result.height > H:
-        _scrollbar(W, H, sc, result.height, scale)
+    thumb = lay.scrollbar_thumb(H, sc, result.height, scale)
+    if thumb is not None:
+        _scrollbar(W, thumb, scale)
     gpu.state.blend_set('NONE')
 
 
@@ -261,11 +262,10 @@ def _draw_image(op, top, base):
     _shader.bind()
 
 
-def _scrollbar(W, H, sc, total, scale):
+def _scrollbar(W, thumb, scale):
+    top, h = thumb
     bar_w = 4 * scale
-    h = max(H * H / total, 24 * scale)
-    y = H - (sc / (total - H)) * (H - h) - h
-    _rect(W - bar_w - 3 * scale, y, bar_w, h, (1, 1, 1, 0.18))
+    _rect(W - bar_w - 3 * scale, top - h, bar_w, h, (1, 1, 1, 0.18))
 
 
 def _message(W, H, scale, msg):

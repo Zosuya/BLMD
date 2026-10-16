@@ -2,11 +2,12 @@
 
 全部用快捷鍵規則（keymap），沒有常駐的背景監看程式（modal operator）——
 常駐的 modal 會讓 Blender 的自動存檔一直延後，等於關掉自動存檔。
-滾輪放在 View2D 那組，因為資訊視窗是在 View2D 那層處理滾輪的。
+滾輪和拖捲軸放在 View2D 那組，因為資訊視窗是在 View2D 那層處理滾輪和捲軸的。
 """
 
 import bpy
 
+from . import layout as lay
 from . import links, preview
 
 
@@ -63,6 +64,59 @@ class BLMD_OT_preview_scroll(_PreviewOp, bpy.types.Operator):
         preview.scroll[text.name] = min(max(sc, 0.0), max_scroll)
         context.area.tag_redraw()
         return {'FINISHED'}
+
+
+class BLMD_OT_preview_scrollbar(_PreviewOp, bpy.types.Operator):
+    """拖右邊的捲軸。
+
+    資訊視窗右緣那一條是 Blender 自己的捲軸地盤，點下去會被 View2D 那組的
+    「拖捲軸」接走，捲的是底下（空的）資訊視窗，預覽不動。所以同樣掛在 View2D 組、
+    搶在它前面接手。只在拖的那一下跑 modal，放開就結束，不會擋自動存檔。
+    """
+
+    bl_idname = "blmd.preview_scrollbar"
+    bl_label = "Drag Markdown Preview Scrollbar"
+    bl_options = {'INTERNAL'}
+
+    def _apply(self, context, mouse_y):
+        sc = lay.scroll_for_thumb(self._h, mouse_y + self._grab, self._total, self._scale)
+        preview.scroll[self._text] = sc
+        context.area.tag_redraw()
+
+    def invoke(self, context, event):
+        info = preview.last_draw.get(context.area.as_pointer())
+        if info is None:
+            return {'PASS_THROUGH'}
+        result, text_name, H = info
+        scale = context.preferences.system.ui_scale
+        # 熱區比畫出來的細條寬一點，好點；排版左右各留 16 像素，碰不到內文
+        if event.mouse_region_x < context.region.width - 14 * scale:
+            return {'PASS_THROUGH'}
+        thumb = lay.scrollbar_thumb(H, preview.scroll.get(text_name, 0.0), result.height, scale)
+        if thumb is None:
+            return {'FINISHED'}  # 沒東西可捲，也別讓底下的資訊視窗去捲
+        top, h = thumb
+        y = event.mouse_region_y
+        self._text, self._h, self._total, self._scale = text_name, H, result.height, scale
+        self._orig = preview.scroll.get(text_name, 0.0)
+        if top - h <= y <= top:
+            self._grab = top - y  # 抓在滑塊上：保持抓的位置
+        else:
+            self._grab = h / 2  # 點在軌道上：滑塊中心跳到滑鼠這裡
+            self._apply(context, y)
+        context.window_manager.modal_handler_add(self)
+        return {'RUNNING_MODAL'}
+
+    def modal(self, context, event):
+        if event.type == 'MOUSEMOVE':
+            self._apply(context, event.mouse_region_y)
+        elif event.type == 'LEFTMOUSE' and event.value == 'RELEASE':
+            return {'FINISHED'}
+        elif event.type in {'ESC', 'RIGHTMOUSE'}:
+            preview.scroll[self._text] = self._orig
+            context.area.tag_redraw()
+            return {'CANCELLED'}
+        return {'RUNNING_MODAL'}
 
 
 class BLMD_OT_preview_click(_PreviewOp, bpy.types.Operator):
@@ -165,6 +219,7 @@ def register():
         kmi = km.keymap_items.new(BLMD_OT_preview_scroll.bl_idname, key, 'PRESS')
         kmi.properties.lines = lines
         _keymaps.append((km, kmi))
+    _keymaps.append((km, km.keymap_items.new(BLMD_OT_preview_scrollbar.bl_idname, 'LEFTMOUSE', 'PRESS')))
 
     km = kc.keymaps.new(name="Info", space_type='INFO')
     for key, lines, edge in (
@@ -196,4 +251,4 @@ def unregister():
     _keymaps.clear()
 
 
-classes = (BLMD_OT_preview_scroll, BLMD_OT_preview_click, BLMD_OT_preview_hover)
+classes = (BLMD_OT_preview_scroll, BLMD_OT_preview_scrollbar, BLMD_OT_preview_click, BLMD_OT_preview_hover)

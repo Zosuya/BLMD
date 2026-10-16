@@ -394,3 +394,30 @@ def build(blocks, width, scale, measurer):
             b.image(blk)
         first = False
     return Layout(b.ops, b.hot, b.y + b.pad)
+
+
+# ---------------------------------------------------------------- 捲軸
+# 座標用區塊座標（底部 = 0、往上為正），跟畫圖和滑鼠事件一致。
+
+
+def _thumb_h(view_h, total, scale):
+    return min(view_h, max(view_h * view_h / total, 24 * scale))
+
+
+def scrollbar_thumb(view_h, scroll, total, scale):
+    """捲軸滑塊的 (頂端, 高度)。內容沒超出畫面就沒有捲軸，回傳 None。"""
+    if total <= view_h:
+        return None
+    h = _thumb_h(view_h, total, scale)
+    return view_h - scroll / (total - view_h) * (view_h - h), h
+
+
+def scroll_for_thumb(view_h, top, total, scale):
+    """反過來算：滑塊頂端被拖到 top 時，捲動量是多少（夾在可捲範圍內）。"""
+    if total <= view_h:
+        return 0.0
+    h = _thumb_h(view_h, total, scale)
+    if view_h <= h:
+        return 0.0
+    frac = (view_h - top) / (view_h - h)
+    return min(max(frac, 0.0), 1.0) * (total - view_h)

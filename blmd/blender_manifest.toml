@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "blmd"
-version = "1.0.0"
+version = "1.0.1"
 name = "BLMD"
 tagline = "Live Markdown preview for the Text Editor"
 maintainer = "Zosuya"

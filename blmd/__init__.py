@@ -1,48 +1,35 @@
-"""BLMD：Blender 文字編輯器的 Markdown 即時預覽。
+_needs_reload = "bpy" in locals()
 
-bpy 相關模組在 register() 裡才 import，這樣 parser / layout 可以不開 Blender 單獨測試。
-"""
+import bpy  # noqa: E402
 
-import importlib
-import sys
+from . import draw, input, layout, links, parser, preview  # noqa: E402
 
-_MODULES = ("preview", "draw", "input")
+if _needs_reload:
+    import importlib
 
+    # 先載入被依賴的模組，再載入用到它們的模組
+    parser = importlib.reload(parser)
+    layout = importlib.reload(layout)
+    links = importlib.reload(links)
+    preview = importlib.reload(preview)
+    draw = importlib.reload(draw)
+    input = importlib.reload(input)
 
-def _modules():
-    mods = []
-    for name in _MODULES:
-        full = f"{__name__}.{name}"
-        mod = sys.modules.get(full)
-        # Reload Addon 時重新載入子模組，否則會沿用舊程式碼
-        mods.append(importlib.reload(mod) if mod else importlib.import_module(full))
-    return mods
+_modules = (preview, draw, input)
 
-
-def _classes(mods):
-    # 所有要註冊的類別都從各模組的 classes 收進這一個清單（見 CLAUDE.md 唯一合法存取方式）
-    return [cls for mod in mods for cls in getattr(mod, "classes", ())]
+# 所有要註冊的類別都收進這一個清單（見 CLAUDE.md 唯一合法存取方式）
+classes = (*preview.classes, *input.classes)
 
 
 def register():
-    import bpy
-
-    for sub in ("parser", "layout", "links"):
-        full = f"{__name__}.{sub}"
-        if full in sys.modules:
-            importlib.reload(sys.modules[full])
-    mods = _modules()
-    for cls in _classes(mods):
+    for cls in classes:
         bpy.utils.register_class(cls)
-    for mod in mods:
+    for mod in _modules:
         mod.register()
 
 
 def unregister():
-    import bpy
-
-    mods = [sys.modules[f"{__name__}.{n}"] for n in _MODULES if f"{__name__}.{n}" in sys.modules]
-    for mod in reversed(mods):
+    for mod in reversed(_modules):
         mod.unregister()
-    for cls in reversed(_classes(mods)):
+    for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
